@@ -18,6 +18,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -53,6 +56,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
     val orderState by viewModel.orderState.collectAsState()
 
     val focusManager = LocalFocusManager.current
+    var showNameMissingDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(orderState) {
         if (orderState is OrderState.Loading || orderState is OrderState.Success) {
@@ -436,16 +440,50 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                     Button(
                         onClick = {
                             focusManager.clearFocus()
-                            viewModel.confirmOrder()
+                            if (customerName.isBlank()) {
+                                showNameMissingDialog = true
+                            } else {
+                                viewModel.confirmOrder()
+                            }
                         },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = red_600,
                             contentColor = Color.White
                         ),
-                        enabled = cartItems.isNotEmpty() && customerName.isNotBlank()
+                        enabled = cartItems.isNotEmpty()
                     ) {
                         Text("Confirmar Pedido")
+                    }
+
+                    if (showNameMissingDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showNameMissingDialog = false },
+                            shape = RoundedCornerShape(20.dp),
+                            containerColor = Color.White,
+                            title = {
+                                Text(
+                                    text = "Nombre requerido",
+                                    style = textB18,
+                                    color = Color.Black
+                                )
+                            },
+                            text = {
+                                Text(
+                                    text = "Falta el nombre del cliente. Por favor, ingresa el nombre para continuar.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.DarkGray
+                                )
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = { showNameMissingDialog = false },
+                                    colors = ButtonDefaults.buttonColors(containerColor = red_600)
+                                ) {
+                                    Text("Aceptar", color = Color.White)
+                                }
+                            }
+                        )
                     }
                 }
             }
