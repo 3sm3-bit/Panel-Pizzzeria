@@ -82,7 +82,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
             ) {
 
                 LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier.padding(bottom = 16.dp)
                 ) {
                     items(categories) { category ->
