@@ -87,14 +87,23 @@ class DataViewModel @Inject constructor(
         viewModelScope.launch {
             _loading.value = true
             try {
-                val customOrder = listOf("8", "9", "10", "4")
-                val cats = categoryDao.getAllCategories()
-                    .map { it.toDomain() }
-                    .filter { it.categoryId != "11" }
-                    .sortedBy { category ->
-                        val index = customOrder.indexOf(category.categoryId)
-                        if (index != -1) index else Int.MAX_VALUE
-                    }
+                val customOrder = listOf("8", "9", "10", "BEBIDAS")
+                val dbCategories = categoryDao.getAllCategories().map { it.toDomain() }
+
+                val filteredCats = dbCategories.filter { it.categoryId != "4" && it.categoryId != "11" }.toMutableList()
+                filteredCats.add(
+                    Category(
+                        categoryId = "BEBIDAS",
+                        categoryName = "BEBIDAS",
+                        namePanel = "BEBIDAS"
+                    )
+                )
+
+                val cats = filteredCats.sortedBy { category ->
+                    val index = customOrder.indexOf(category.categoryId)
+                    if (index != -1) index else Int.MAX_VALUE
+                }
+
                 val prods = productDao.getAllProducts().map { it.toDomain() }
                 _categories.value = cats
                 _products.value = prods
@@ -112,7 +121,7 @@ class DataViewModel @Inject constructor(
 
     fun selectCategory(categoryId: String) {
         _selectedCategoryId.value = categoryId
-        if (categoryId == "4") {
+        if (categoryId == "BEBIDAS") {
             _filteredProducts.value = _products.value.filter { it.menuCategoryId == "4" || it.menuCategoryId == "11" }
         } else {
             _filteredProducts.value = _products.value.filter { it.menuCategoryId == categoryId }
