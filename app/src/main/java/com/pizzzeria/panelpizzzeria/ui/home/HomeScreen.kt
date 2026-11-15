@@ -313,6 +313,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                                                             FilterChip(
                                                                 selected = isSelected,
                                                                 onClick = { viewModel.updateCartItemMasa(cartItem.cartItemId, masa) },
+                                                                shape = RoundedCornerShape(20.dp),
                                                                 border = FilterChipDefaults.filterChipBorder(
                                                                     enabled = true,
                                                                     selected = isSelected,
