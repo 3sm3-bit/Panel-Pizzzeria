@@ -1,15 +1,42 @@
+# Built files & outputs
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+/build/
+**/build/
+.gradle/
+.externalNativeBuild/
+.cxx/
+captures/
+
+# IDE & Tooling
+.idea/
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.vscode/
+
+# Local & Sensitive Configuration
 local.properties
+keystore.properties
+*.jks
+*.keystore
+*.p12
+*.pem
+*.pk8
+*.key
+google-services.json
+GoogleService-Info.plist
+
+# OS Generated
+.DS_Store
+Thumbs.db
+
+# Log & Temporary files
+*.log

@@ -11,6 +11,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -375,15 +377,34 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                                     }
 
                                     val subtotalStr = String.format(Locale.getDefault(), "$ %.2f", cartItem.totalPrice)
-                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Spacer(modifier = Modifier.height(8.dp))
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.End
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
+                                        Row(
+                                            modifier = Modifier.clickable { viewModel.removeFromCart(cartItem.cartItemId) },
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = "Eliminar",
+                                                tint = red_600,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Text(
+                                                text = "Eliminar",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = red_600
+                                            )
+                                        }
+
                                         Text(
                                             text = "Subtotal: $subtotalStr",
                                             style = MaterialTheme.typography.bodyMedium,
-                                            color =Color.Black
+                                            color = Color.Black
                                         )
                                     }
                                 }

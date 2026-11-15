@@ -180,26 +180,17 @@ class DataViewModel @Inject constructor(
         if (index >= 0) {
             val item = currentCart[index]
             val newQty = item.quantity + delta
-            if (newQty > 0) {
+            if (newQty >= 1) {
                 currentCart[index] = item.copy(quantity = newQty)
-            } else {
-                currentCart.removeAt(index)
+                _cartItems.value = currentCart
             }
-            _cartItems.value = currentCart
         }
     }
 
-    fun removeFromCart(product: Product) {
+
+    fun removeFromCart(cartItemId: String) {
         val currentCart = _cartItems.value.toMutableList()
-        val existingIndex = currentCart.indexOfLast { it.product.productId == product.productId }
-        if (existingIndex >= 0) {
-            val item = currentCart[existingIndex]
-            if (item.quantity > 1) {
-                currentCart[existingIndex] = item.copy(quantity = item.quantity - 1)
-            } else {
-                currentCart.removeAt(existingIndex)
-            }
-        }
+        currentCart.removeAll { it.cartItemId == cartItemId }
         _cartItems.value = currentCart
     }
 
