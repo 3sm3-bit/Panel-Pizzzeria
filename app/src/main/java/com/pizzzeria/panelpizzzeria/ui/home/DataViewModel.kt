@@ -87,9 +87,10 @@ class DataViewModel @Inject constructor(
         viewModelScope.launch {
             _loading.value = true
             try {
-                val customOrder = listOf("8", "9", "10", "4", "11")
+                val customOrder = listOf("8", "9", "10", "4")
                 val cats = categoryDao.getAllCategories()
                     .map { it.toDomain() }
+                    .filter { it.categoryId != "11" }
                     .sortedBy { category ->
                         val index = customOrder.indexOf(category.categoryId)
                         if (index != -1) index else Int.MAX_VALUE
@@ -111,7 +112,11 @@ class DataViewModel @Inject constructor(
 
     fun selectCategory(categoryId: String) {
         _selectedCategoryId.value = categoryId
-        _filteredProducts.value = _products.value.filter { it.menuCategoryId == categoryId }
+        if (categoryId == "4") {
+            _filteredProducts.value = _products.value.filter { it.menuCategoryId == "4" || it.menuCategoryId == "11" }
+        } else {
+            _filteredProducts.value = _products.value.filter { it.menuCategoryId == categoryId }
+        }
     }
 
     fun updateCustomerName(name: String) {
