@@ -82,7 +82,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
             ) {
 
                 LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.padding(bottom = 16.dp)
                 ) {
                     items(categories) { category ->
@@ -194,7 +194,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
 
             Card(
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(1.1f)
                     .fillMaxHeight(),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
