@@ -190,7 +190,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
 
             Card(
                 modifier = Modifier
-                    .weight(0.9f)
+                    .weight(1f)
                     .fillMaxHeight(),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
