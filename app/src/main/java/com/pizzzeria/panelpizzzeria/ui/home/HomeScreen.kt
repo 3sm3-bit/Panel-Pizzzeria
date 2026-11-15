@@ -82,14 +82,14 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
             ) {
 
                 LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.padding(bottom = 16.dp)
                 ) {
                     items(categories) { category ->
                         val isSelected = category.categoryId == selectedCategoryId
                         Button(
                             onClick = { viewModel.selectCategory(category.categoryId) },
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                             border = if (!isSelected) BorderStroke(1.dp, red_600) else null,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (isSelected) red_600 else Color.White,
@@ -218,7 +218,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                         onValueChange = { viewModel.updateCustomerName(it) },
                         label = { Text("Nombre de cliente") },
                         placeholder = { Text("Escribe tu nombre aquí") },
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(20.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White,
