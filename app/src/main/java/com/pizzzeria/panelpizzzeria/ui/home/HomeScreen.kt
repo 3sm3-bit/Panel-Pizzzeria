@@ -31,6 +31,9 @@ import coil.compose.AsyncImage
 import com.pizzzeria.panelpizzzeria.utils.green_600
 import com.pizzzeria.panelpizzzeria.utils.grey_100
 import com.pizzzeria.panelpizzzeria.utils.red_600
+import com.pizzzeria.panelpizzzeria.utils.textB10
+import com.pizzzeria.panelpizzzeria.utils.textB12
+import com.pizzzeria.panelpizzzeria.utils.textB16
 import com.pizzzeria.panelpizzzeria.utils.textB18
 import com.pizzzeria.panelpizzzeria.utils.textB20
 import com.pizzzeria.panelpizzzeria.utils.textB22
@@ -75,7 +78,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
             ) {
 
                 LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier.padding(bottom = 16.dp)
                 ) {
                     items(categories) { category ->
@@ -90,6 +93,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                         ) {
                             Text(
                                 text = category.namePanel,
+                                style = textB12,
                                 color = if (isSelected) Color.White else red_600
                             )
                         }
@@ -117,8 +121,8 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                 } else {
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(3),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier
                             .fillMaxSize()
                             .weight(1f)
@@ -162,7 +166,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                                     ) {
                                         Text(
                                             text = product.productName,
-                                            style = textB18,
+                                            style = textB16,
                                             color = Color.Black,
                                             maxLines = 2,
                                             modifier = Modifier
@@ -186,7 +190,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
 
             Card(
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(0.8f)
                     .fillMaxHeight(),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
