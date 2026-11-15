@@ -89,6 +89,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                         val isSelected = category.categoryId == selectedCategoryId
                         Button(
                             onClick = { viewModel.selectCategory(category.categoryId) },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
                             border = if (!isSelected) BorderStroke(1.dp, red_600) else null,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (isSelected) red_600 else Color.White,
