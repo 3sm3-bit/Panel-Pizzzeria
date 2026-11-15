@@ -202,7 +202,7 @@ class DataViewModel @Inject constructor(
             _orderState.value = OrderState.Loading
             kotlinx.coroutines.delay(2000)
             _orderState.value = OrderState.Success(name)
-            kotlinx.coroutines.delay(2000)
+            kotlinx.coroutines.delay(4000)
             _cartItems.value = emptyList()
             _customerName.value = ""
             _orderState.value = OrderState.Idle
