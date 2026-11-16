@@ -1,13 +1,17 @@
 package com.pizzzeria.panelpizzzeria.ui.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
+import com.pizzzeria.panelpizzzeria.BuildConfig
 import com.pizzzeria.panelpizzzeria.model.Category
 import com.pizzzeria.panelpizzzeria.model.ModificationItem
 import com.pizzzeria.panelpizzzeria.model.Product
 import com.pizzzeria.panelpizzzeria.model.toDomain
 import com.pizzzeria.panelpizzzeria.repository.db.dao.CategoryDao
 import com.pizzzeria.panelpizzzeria.repository.db.dao.ProductDao
+import com.pizzzeria.panelpizzzeria.repository.network.DataNetwork
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,7 +53,8 @@ sealed interface OrderState {
 @HiltViewModel
 class DataViewModel @Inject constructor(
     private val categoryDao: CategoryDao,
-    private val productDao: ProductDao
+    private val productDao: ProductDao,
+    private val dataNetwork: DataNetwork
 ) : ViewModel() {
 
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
@@ -219,16 +224,60 @@ class DataViewModel @Inject constructor(
 
     fun confirmOrder() {
         val name = _customerName.value
-        if (name.isBlank() || _cartItems.value.isEmpty()) return
+        val items = _cartItems.value
+        if (name.isBlank() || items.isEmpty()) return
 
         viewModelScope.launch {
             _orderState.value = OrderState.Loading
-            kotlinx.coroutines.delay(2000)
-            _orderState.value = OrderState.Success(name)
-            kotlinx.coroutines.delay(4000)
-            _cartItems.value = emptyList()
-            _customerName.value = ""
-            _orderState.value = OrderState.Idle
+            try {
+                val token = BuildConfig.KEY_POSTER
+                val fields = mutableMapOf<String, String>()
+                fields["spot_id"] = "1"
+                fields["first_name"] = name
+
+                val commentsList = mutableListOf<String>()
+                items.forEachIndexed { index, cartItem ->
+                    fields["products[$index][product_id]"] = cartItem.product.productId
+                    fields["products[$index][count]"] = cartItem.quantity.toString()
+                    fields["products[$index][price]"] = (cartItem.unitPrice * 100).toLong().toString()
+
+                    val mods = mutableListOf<Map<String, Int>>()
+                    cartItem.selectedMasa?.let { masa ->
+                        mods.add(mapOf("m" to masa.dishModificationId, "a" to 1))
+                    }
+                    cartItem.selectedOrilla?.let { orilla ->
+                        mods.add(mapOf("m" to orilla.dishModificationId, "a" to 1))
+                    }
+                    if (mods.isNotEmpty()) {
+                        fields["products[$index][modification]"] = Gson().toJson(mods)
+                    }
+
+                    var desc = "${cartItem.quantity}x ${cartItem.product.productName}"
+                    cartItem.selectedMasa?.let { desc += " (${it.name})" }
+                    cartItem.selectedOrilla?.let { desc += " [${it.name}]" }
+                    commentsList.add(desc)
+                }
+
+                fields["comment"] = "Pedido: " + commentsList.joinToString(", ")
+
+                val response = dataNetwork.createIncomingOrder(token, fields)
+                if (response.isSuccessful) {
+                    val orderId = response.body()?.response?.incomingOrderId
+                    Log.d("DataViewModel", "Order created successfully in Poster. ID: $orderId")
+                    _orderState.value = OrderState.Success(name)
+                    kotlinx.coroutines.delay(4000)
+                    _cartItems.value = emptyList()
+                    _customerName.value = ""
+                    _orderState.value = OrderState.Idle
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Log.e("DataViewModel", "Failed to create order in Poster: $errorBody")
+                    _orderState.value = OrderState.Idle
+                }
+            } catch (e: Exception) {
+                Log.e("DataViewModel", "Exception creating order in Poster", e)
+                _orderState.value = OrderState.Idle
+            }
         }
     }
 }
