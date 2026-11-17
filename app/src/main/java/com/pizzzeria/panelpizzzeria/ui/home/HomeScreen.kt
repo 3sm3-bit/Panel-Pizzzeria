@@ -27,6 +27,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -221,6 +222,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                         label = { Text("Nombre de cliente") },
                         placeholder = { Text("Escribe tu nombre aquí") },
                         shape = RoundedCornerShape(20.dp),
+                        textStyle = TextStyle(color = Color.Black),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White,
@@ -242,6 +244,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                         label = { Text("Teléfono") },
                         placeholder = { Text("Escribe tu teléfono aquí") },
                         shape = RoundedCornerShape(20.dp),
+                        textStyle = TextStyle(color = Color.Black),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
                             unfocusedContainerColor = Color.White,
