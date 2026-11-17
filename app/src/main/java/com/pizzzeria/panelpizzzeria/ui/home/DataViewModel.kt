@@ -48,6 +48,7 @@ sealed interface OrderState {
     object Idle : OrderState
     object Loading : OrderState
     data class Success(val customerName: String) : OrderState
+    data class Error(val message: String) : OrderState
 }
 
 @HiltViewModel
@@ -234,9 +235,8 @@ class DataViewModel @Inject constructor(
                 val fields = mutableMapOf<String, String>()
                 fields["spot_id"] = BuildConfig.ID_BRANCH
                 fields["first_name"] = name
-                val timestampStr = System.currentTimeMillis().toString()
-                val uniqueSuffix = timestampStr.takeLast(7).padStart(7, '0')
-                fields["phone"] = "449$uniqueSuffix"
+                val rawPhone = "524490000000"
+                fields["phone"] = rawPhone.replace(Regex("[^0-9]"), "")
 
                 val commentsList = mutableListOf<String>()
                 items.forEachIndexed { index, cartItem ->
@@ -273,14 +273,18 @@ class DataViewModel @Inject constructor(
                     _customerName.value = ""
                     _orderState.value = OrderState.Idle
                 } else {
-                    val errorBody = response.errorBody()?.string()
+                    val errorBody = response.errorBody()?.string() ?: "Error desconocido"
                     Log.e("DataViewModel", "Failed to create order in Poster: $errorBody")
-                    _orderState.value = OrderState.Idle
+                    _orderState.value = OrderState.Error("No se pudo registrar el pedido en Poster ($errorBody).")
                 }
             } catch (e: Exception) {
                 Log.e("DataViewModel", "Exception creating order in Poster", e)
-                _orderState.value = OrderState.Idle
+                _orderState.value = OrderState.Error("Error de red: ${e.localizedMessage ?: "Verifica tu conexión"}")
             }
         }
+    }
+
+    fun resetOrderState() {
+        _orderState.value = OrderState.Idle
     }
 }

@@ -537,6 +537,35 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                     )
                 }
             }
+            is OrderState.Error -> {
+                AlertDialog(
+                    onDismissRequest = { viewModel.resetOrderState() },
+                    shape = RoundedCornerShape(20.dp),
+                    containerColor = Color.White,
+                    title = {
+                        Text(
+                            text = "Error al registrar pedido",
+                            style = textB18,
+                            color = red_600
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = state.message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.DarkGray
+                        )
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = { viewModel.resetOrderState() },
+                            colors = ButtonDefaults.buttonColors(containerColor = red_600)
+                        ) {
+                            Text("Aceptar", color = Color.White, style = textB16)
+                        }
+                    }
+                )
+            }
             OrderState.Idle -> { }
         }
     }
