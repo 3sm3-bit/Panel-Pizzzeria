@@ -73,6 +73,9 @@ class DataViewModel @Inject constructor(
     private val _customerName = MutableStateFlow("")
     val customerName: StateFlow<String> = _customerName.asStateFlow()
 
+    private val _customerPhone = MutableStateFlow("")
+    val customerPhone: StateFlow<String> = _customerPhone.asStateFlow()
+
     private val _cartItems = MutableStateFlow<List<CartItem>>(emptyList())
     val cartItems: StateFlow<List<CartItem>> = _cartItems.asStateFlow()
 
@@ -145,6 +148,10 @@ class DataViewModel @Inject constructor(
 
     fun updateCustomerName(name: String) {
         _customerName.value = name
+    }
+
+    fun updateCustomerPhone(phone: String) {
+        _customerPhone.value = phone
     }
 
     fun addToCart(product: Product) {
@@ -235,8 +242,14 @@ class DataViewModel @Inject constructor(
                 val fields = mutableMapOf<String, String>()
                 fields["spot_id"] = BuildConfig.ID_BRANCH
                 fields["first_name"] = name
-                val rawPhone = "524490000000"
-                fields["phone"] = rawPhone.replace(Regex("[^0-9]"), "")
+                val phoneInput = _customerPhone.value.trim()
+                val cleanPhone = if (phoneInput.isNotEmpty()) {
+                    phoneInput.replace(Regex("[^0-9]"), "")
+                } else {
+                    val timestampStr = System.currentTimeMillis().toString()
+                    "449" + timestampStr.takeLast(7).padStart(7, '0')
+                }
+                fields["phone"] = cleanPhone
 
                 val commentsList = mutableListOf<String>()
                 items.forEachIndexed { index, cartItem ->
@@ -261,7 +274,7 @@ class DataViewModel @Inject constructor(
                     commentsList.add(desc)
                 }
 
-                fields["comment"] = "Pedido: " + commentsList.joinToString(", ")
+                fields["comment"] = "Cliente: $name | Pedido: " + commentsList.joinToString(", ")
 
                 val response = dataNetwork.createIncomingOrder(token, fields)
                 if (response.isSuccessful) {
@@ -271,6 +284,7 @@ class DataViewModel @Inject constructor(
                     kotlinx.coroutines.delay(4000)
                     _cartItems.value = emptyList()
                     _customerName.value = ""
+                    _customerPhone.value = ""
                     _orderState.value = OrderState.Idle
                 } else {
                     val errorBody = response.errorBody()?.string() ?: "Error desconocido"

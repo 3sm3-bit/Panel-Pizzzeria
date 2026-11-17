@@ -51,6 +51,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
     val selectedCategoryId by viewModel.selectedCategoryId.collectAsState()
     val filteredProducts by viewModel.filteredProducts.collectAsState()
     val customerName by viewModel.customerName.collectAsState()
+    val customerPhone by viewModel.customerPhone.collectAsState()
     val cartItems by viewModel.cartItems.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -228,7 +229,29 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 12.dp),
+                            .height(52.dp)
+                            .padding(bottom = 6.dp),
+                        singleLine = true
+                    )
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                    OutlinedTextField(
+                        value = customerPhone,
+                        onValueChange = { viewModel.updateCustomerPhone(it) },
+                        label = { Text("Teléfono") },
+                        placeholder = { Text("Escribe tu teléfono aquí") },
+                        shape = RoundedCornerShape(20.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedBorderColor = red_600,
+                            unfocusedBorderColor = red_600
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .padding(bottom = 8.dp),
                         singleLine = true
                     )
 
@@ -449,7 +472,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                                 viewModel.confirmOrder()
                             }
                         },
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        modifier = Modifier.fillMaxWidth().height(46.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = red_600,
                             contentColor = Color.White
