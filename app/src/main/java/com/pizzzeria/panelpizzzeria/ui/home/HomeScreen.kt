@@ -47,6 +47,7 @@ import com.pizzzeria.panelpizzzeria.utils.textB22
 import com.pizzzeria.panelpizzzeria.utils.textB30
 import com.pizzzeria.panelpizzzeria.utils.textM10
 import com.pizzzeria.panelpizzzeria.utils.textS18
+import java.text.NumberFormat
 import java.util.Locale
 
 @Composable
@@ -138,7 +139,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                             .weight(1f)
                     ) {
                         items(filteredProducts) { product ->
-                            val formattedPrice = String.format(Locale.getDefault(), "$ %.2f", product.price)
+                            val formattedPrice = formatCurrency(product.price)
 
                             Card(
                                 modifier = Modifier
@@ -258,7 +259,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                                                 text = cartItem.product.productName,
                                                 style = MaterialTheme.typography.titleMedium
                                             )
-                                            val unitPriceStr = String.format(Locale.getDefault(), "$ %.2f", cartItem.unitPrice)
+                                            val unitPriceStr = formatCurrency(cartItem.unitPrice)
                                             Text(
                                                 text = "$unitPriceStr c/u",
                                                 style = MaterialTheme.typography.bodySmall,
@@ -341,7 +342,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                                                 ) {
                                                     orillaGroup.modifications.forEach { orilla ->
                                                         val isOrillaActive = cartItem.selectedOrilla?.dishModificationId == orilla.dishModificationId
-                                                        val priceAddStr = if (orilla.price > 0) " (+$${String.format(Locale.getDefault(), "%.2f", orilla.price)})" else ""
+                                                        val priceAddStr = if (orilla.price > 0) " (+${formatCurrency(orilla.price)})" else ""
                                                         val cleanName = orilla.name
                                                             .replace(Regex("(?i)\\b(grande|mediana|chica)\\b"), "")
                                                             .replace(Regex("\\s+"), " ")
@@ -382,7 +383,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                                         }
                                     }
 
-                                    val subtotalStr = String.format(Locale.getDefault(), "$ %.2f", cartItem.totalPrice)
+                                    val subtotalStr = formatCurrency(cartItem.totalPrice)
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -421,7 +422,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                     val grandTotal = cartItems.sumOf { it.totalPrice }
-                    val grandTotalStr = String.format(Locale.getDefault(), "$ %.2f", grandTotal)
+                    val grandTotalStr = formatCurrency(grandTotal)
 
                     Row(
                         modifier = Modifier
@@ -574,50 +575,42 @@ fun CompactTextField(
     keyboardType: KeyboardType = KeyboardType.Text,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier.padding(top = 6.dp)) {
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            border = BorderStroke(1.dp, red_600),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(1.dp, red_600),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        modifier = modifier
+    ) {
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(44.dp)
+                .height(42.dp)
+                .padding(horizontal = 12.dp),
+            contentAlignment = Alignment.CenterStart
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 12.dp),
-                contentAlignment = Alignment.CenterStart
-            ) {
-                if (value.isEmpty()) {
-                    Text(
-                        text = label,
-                        style = TextStyle(color = Color.Gray, fontSize = 13.sp)
-                    )
-                }
-                BasicTextField(
-                    value = value,
-                    onValueChange = onValueChange,
-                    singleLine = true,
-                    textStyle = TextStyle(color = Color.Black, fontSize = 14.sp),
-                    keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-        if (value.isNotEmpty()) {
-            Surface(
-                color = Color.White,
-                modifier = Modifier
-                    .padding(start = 14.dp)
-                    .offset(y = (-6).dp)
-            ) {
+            if (value.isEmpty()) {
                 Text(
                     text = label,
-                    style = TextStyle(fontSize = 10.sp, color = red_600),
-                    modifier = Modifier.padding(horizontal = 4.dp)
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
                 )
             }
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = true,
+                textStyle = TextStyle(color = Color.Black, fontSize = 14.sp),
+                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
+}
+
+fun formatCurrency(amount: Double): String {
+    val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("es-MX")).apply {
+        minimumFractionDigits = 2
+        maximumFractionDigits = 2
+    }
+    return "$ ${formatter.format(amount)}"
 }
