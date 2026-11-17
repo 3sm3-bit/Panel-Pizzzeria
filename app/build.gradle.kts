@@ -28,6 +28,7 @@ fun config(k: String): String {
 
 val baseUrl = "BASE_URL"
 val keyPoster = "KEY_POSTER"
+val idBranch = "ID_BRANCH"
 
 configure<ApplicationExtension> {
     namespace = "com.pizzzeria.panelpizzzeria"
@@ -65,6 +66,7 @@ configure<ApplicationExtension> {
             isDebuggable = false
             buildConfigField("String", baseUrl, config("production.server.url"))
             buildConfigField("String", keyPoster, config("key.poster"))
+            buildConfigField("String", idBranch, config("id.branch"))
         }
         debug {
             proguardFiles(
@@ -75,6 +77,7 @@ configure<ApplicationExtension> {
             enableUnitTestCoverage = true
             buildConfigField("String", baseUrl, config("qa.server.url"))
             buildConfigField("String", keyPoster, config("key.poster"))
+            buildConfigField("String", idBranch, config("id.branch"))
         }
     }
 

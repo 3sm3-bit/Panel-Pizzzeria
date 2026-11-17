@@ -232,7 +232,7 @@ class DataViewModel @Inject constructor(
             try {
                 val token = BuildConfig.KEY_POSTER
                 val fields = mutableMapOf<String, String>()
-                fields["spot_id"] = "1"
+                fields["spot_id"] = BuildConfig.ID_BRANCH
                 fields["first_name"] = name
 
                 val commentsList = mutableListOf<String>()
