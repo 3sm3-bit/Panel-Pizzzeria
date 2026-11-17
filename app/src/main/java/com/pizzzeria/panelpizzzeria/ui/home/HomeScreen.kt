@@ -11,6 +11,9 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
@@ -30,12 +33,12 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.pizzzeria.panelpizzzeria.utils.green_600
 import com.pizzzeria.panelpizzzeria.utils.grey_100
 import com.pizzzeria.panelpizzzeria.utils.red_600
-import com.pizzzeria.panelpizzzeria.utils.textB10
 import com.pizzzeria.panelpizzzeria.utils.textB12
 import com.pizzzeria.panelpizzzeria.utils.textB16
 import com.pizzzeria.panelpizzzeria.utils.textB18
@@ -211,52 +214,31 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                 ) {
                     Text(
                         text = "Tu pedido",
-                        style = textB20,
+                        style = textB16,
                         color =Color.Black,
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
 
-                    OutlinedTextField(
-                        value = customerName,
-                        onValueChange = { viewModel.updateCustomerName(it) },
-                        label = { Text("Nombre de cliente") },
-                        placeholder = { Text("Escribe tu nombre aquí") },
-                        shape = RoundedCornerShape(20.dp),
-                        textStyle = TextStyle(color = Color.Black),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedBorderColor = red_600,
-                            unfocusedBorderColor = red_600
-                        ),
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(52.dp)
-                            .padding(bottom = 6.dp),
-                        singleLine = true
-                    )
-
-                    Spacer(modifier = Modifier.height(2.dp))
-
-                    OutlinedTextField(
-                        value = customerPhone,
-                        onValueChange = { viewModel.updateCustomerPhone(it) },
-                        label = { Text("Teléfono") },
-                        placeholder = { Text("Escribe tu teléfono aquí") },
-                        shape = RoundedCornerShape(20.dp),
-                        textStyle = TextStyle(color = Color.Black),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedBorderColor = red_600,
-                            unfocusedBorderColor = red_600
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp)
                             .padding(bottom = 8.dp),
-                        singleLine = true
-                    )
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        CompactTextField(
+                            value = customerName,
+                            onValueChange = { viewModel.updateCustomerName(it) },
+                            label = "Nombre",
+                            modifier = Modifier.weight(1.5f)
+                        )
+                        CompactTextField(
+                            value = customerPhone,
+                            onValueChange = { viewModel.updateCustomerPhone(it) },
+                            label = "Teléfono",
+                            keyboardType = KeyboardType.Number,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -593,6 +575,46 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                 )
             }
             OrderState.Idle -> { }
+        }
+    }
+}
+
+@Composable
+fun CompactTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(1.dp, red_600),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(42.dp)
+                .padding(horizontal = 12.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            if (value.isEmpty()) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+            }
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = true,
+                textStyle = TextStyle(color = Color.Black, fontSize = 14.sp),
+                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
