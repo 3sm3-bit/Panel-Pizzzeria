@@ -40,6 +40,7 @@ import com.pizzzeria.panelpizzzeria.utils.textB16
 import com.pizzzeria.panelpizzzeria.utils.textB18
 import com.pizzzeria.panelpizzzeria.utils.textB20
 import com.pizzzeria.panelpizzzeria.utils.textB22
+import com.pizzzeria.panelpizzzeria.utils.textB30
 import com.pizzzeria.panelpizzzeria.utils.textM10
 import com.pizzzeria.panelpizzzeria.utils.textS18
 import java.util.Locale
@@ -530,7 +531,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                 ) {
                     Text(
                         text = "${state.customerName}, \ntu pedido ha sido registrado. \nAhora dirígete a la caja a pagar.",
-                        style = textB22,
+                        style = textB30,
                         color = Color.White,
                         textAlign = TextAlign.Center
                     )
