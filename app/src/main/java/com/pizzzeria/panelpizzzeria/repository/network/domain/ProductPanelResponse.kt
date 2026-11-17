@@ -20,8 +20,19 @@ data class ProductItemResponse(
     val photoOrigin: String?,
     @SerializedName("price")
     val price: Map<String, String>?,
+    @SerializedName("spots")
+    val spots: List<SpotPriceResponse>?,
     @SerializedName("group_modifications")
     val groupModifications: List<ModificationGroupResponse>?
+)
+
+data class SpotPriceResponse(
+    @SerializedName("spot_id")
+    val spotId: String?,
+    @SerializedName("price")
+    val price: String?,
+    @SerializedName("visible")
+    val visible: String?
 )
 
 data class ModificationGroupResponse(

@@ -61,17 +61,20 @@ class SplashViewModel @Inject constructor(
                 if (productsResponse.isSuccessful) {
                     val productItems = productsResponse.body()?.response ?: emptyList()
                     val productEntities = productItems.mapNotNull { item ->
-                        val spotPriceStr = item.price?.get(spotId)
-                        val spotPriceVal = spotPriceStr?.toDoubleOrNull() ?: 0.0
-                        if (spotPriceVal <= 0) {
+                        val spotEntry = item.spots?.find { it.spotId == spotId }
+                        val isVisible = spotEntry?.visible == "1"
+                        if (!isVisible) {
                             null
                         } else {
-                            item.toEntity()
+                            val spotPrice = spotEntry.price
+                            val updatedPrice = if (spotPrice != null) mapOf(spotId to spotPrice) else item.price
+                            val entity = item.toEntity()
+                            entity?.copy(price = updatedPrice)
                         }
                     }
                     productDao.clearAllProducts()
                     productDao.insertProducts(productEntities)
-                    Log.d("SplashViewModel", "Cleared old products and saved ${productEntities.size} available products for spot $spotId.")
+                    Log.d("SplashViewModel", "Cleared old products and saved ${productEntities.size} visible products for spot $spotId.")
                 } else {
                     Log.e("SplashViewModel", "Error fetching products: ${productsResponse.errorBody()?.string()}")
                 }
