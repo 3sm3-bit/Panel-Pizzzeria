@@ -73,9 +73,6 @@ class DataViewModel @Inject constructor(
     private val _customerName = MutableStateFlow("")
     val customerName: StateFlow<String> = _customerName.asStateFlow()
 
-    private val _customerPhone = MutableStateFlow("")
-    val customerPhone: StateFlow<String> = _customerPhone.asStateFlow()
-
     private val _cartItems = MutableStateFlow<List<CartItem>>(emptyList())
     val cartItems: StateFlow<List<CartItem>> = _cartItems.asStateFlow()
 
@@ -148,10 +145,6 @@ class DataViewModel @Inject constructor(
 
     fun updateCustomerName(name: String) {
         _customerName.value = name
-    }
-
-    fun updateCustomerPhone(phone: String) {
-        _customerPhone.value = phone
     }
 
     fun addToCart(product: Product) {
@@ -242,14 +235,12 @@ class DataViewModel @Inject constructor(
                 val fields = mutableMapOf<String, String>()
                 fields["spot_id"] = BuildConfig.ID_BRANCH
                 fields["first_name"] = name
-                val phoneInput = _customerPhone.value.trim()
-                val cleanPhone = if (phoneInput.isNotEmpty()) {
-                    "+52" + phoneInput.replace(Regex("[^0-9]"), "")
-                } else {
-                    val timestampStr = System.currentTimeMillis().toString()
-                    "+52" + "449" + timestampStr.takeLast(7).padStart(7, '0')
+                val defaultPhone = when (BuildConfig.ID_BRANCH) {
+                    "1" -> "+524491000000"
+                    "3" -> "+524490000000"
+                    else -> "+524490000000"
                 }
-                fields["phone"] = cleanPhone
+                fields["phone"] = defaultPhone.replace(Regex("[^0-9]"), "")
 
                 val commentsList = mutableListOf<String>()
                 items.forEachIndexed { index, cartItem ->
@@ -284,7 +275,6 @@ class DataViewModel @Inject constructor(
                     kotlinx.coroutines.delay(4000)
                     _cartItems.value = emptyList()
                     _customerName.value = ""
-                    _customerPhone.value = ""
                     _orderState.value = OrderState.Idle
                 } else {
                     val errorBody = response.errorBody()?.string() ?: "Error desconocido"

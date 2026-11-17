@@ -55,7 +55,6 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
     val selectedCategoryId by viewModel.selectedCategoryId.collectAsState()
     val filteredProducts by viewModel.filteredProducts.collectAsState()
     val customerName by viewModel.customerName.collectAsState()
-    val customerPhone by viewModel.customerPhone.collectAsState()
     val cartItems by viewModel.cartItems.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -219,29 +218,14 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                         modifier = Modifier.padding(bottom = 12.dp)
                     )
 
-                    Row(
+                    CompactTextField(
+                        value = customerName,
+                        onValueChange = { viewModel.updateCustomerName(it) },
+                        label = "Nombre de cliente",
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        CompactTextField(
-                            value = customerName,
-                            onValueChange = { viewModel.updateCustomerName(it) },
-                            label = "Nombre",
-                            modifier = Modifier.weight(1.5f)
-                        )
-                        CompactTextField(
-                            value = customerPhone,
-                            onValueChange = { 
-                                val filtered = it.filter { char -> char.isDigit() }.take(10)
-                                viewModel.updateCustomerPhone(filtered)
-                            },
-                            label = "Teléfono",
-                            keyboardType = KeyboardType.Number,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+                            .padding(bottom = 8.dp)
+                    )
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
