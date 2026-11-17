@@ -42,9 +42,10 @@ class SplashViewModel @Inject constructor(
             try {
                 Log.d("SplashViewModel", "Fetching latest data from network...")
                 val token = BuildConfig.KEY_POSTER
+                val spotId = BuildConfig.ID_BRANCH
 
                 // Fetch Categories
-                val categoriesResponse = dataNetwork.getCategories(token)
+                val categoriesResponse = dataNetwork.getCategories(token, spotId)
                 if (categoriesResponse.isSuccessful) {
                     val categoryItems = categoriesResponse.body()?.response ?: emptyList()
                     val categoryEntities = categoryItems.mapNotNull { it.toEntity() }
@@ -56,7 +57,7 @@ class SplashViewModel @Inject constructor(
                 }
 
                 // Fetch Products
-                val productsResponse = dataNetwork.getProducts(token)
+                val productsResponse = dataNetwork.getProducts(token, spotId)
                 if (productsResponse.isSuccessful) {
                     val productItems = productsResponse.body()?.response ?: emptyList()
                     val productEntities = productItems.mapNotNull { it.toEntity() }

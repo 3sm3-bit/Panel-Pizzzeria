@@ -13,10 +13,16 @@ import retrofit2.http.Query
 interface ServiceApi {
 
     @GET("menu.getCategories")
-    suspend fun getCategories(@Query("token") token: String): Response<CategoryResponse>
+    suspend fun getCategories(
+        @Query("token") token: String,
+        @Query("spot_id") spotId: String? = null
+    ): Response<CategoryResponse>
 
     @GET("menu.getProducts")
-    suspend fun getProducts(@Query("token") token: String): Response<ProductResponse>
+    suspend fun getProducts(
+        @Query("token") token: String,
+        @Query("spot_id") spotId: String? = null
+    ): Response<ProductResponse>
 
     @FormUrlEncoded
     @POST("incomingOrders.createIncomingOrder")

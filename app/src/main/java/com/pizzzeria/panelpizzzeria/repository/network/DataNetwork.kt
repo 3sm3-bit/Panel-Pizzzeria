@@ -10,12 +10,12 @@ import javax.inject.Inject
 class DataNetwork @Inject constructor(
     private val serviceApi: ServiceApi
 ) {
-    suspend fun getCategories(token: String): Response<CategoryResponse> {
-        return serviceApi.getCategories(token)
+    suspend fun getCategories(token: String, spotId: String? = null): Response<CategoryResponse> {
+        return serviceApi.getCategories(token, spotId)
     }
 
-    suspend fun getProducts(token: String): Response<ProductResponse> {
-        return serviceApi.getProducts(token)
+    suspend fun getProducts(token: String, spotId: String? = null): Response<ProductResponse> {
+        return serviceApi.getProducts(token, spotId)
     }
 
     suspend fun createIncomingOrder(token: String, fields: Map<String, String>): Response<IncomingOrderResponse> {
