@@ -530,7 +530,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "${state.customerName}, \ntu pedido ha sido registrado. \nAhora dirígete a la caja a pagar.",
+                        text = "${state.customerName}, \n\ntu pedido ha sido registrado. \n\nAhora dirígete a la caja a pagar.",
                         style = textB30,
                         color = Color.White,
                         textAlign = TextAlign.Center
