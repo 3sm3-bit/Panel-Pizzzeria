@@ -233,7 +233,10 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                         )
                         CompactTextField(
                             value = customerPhone,
-                            onValueChange = { viewModel.updateCustomerPhone(it) },
+                            onValueChange = { 
+                                val filtered = it.filter { char -> char.isDigit() }.take(10)
+                                viewModel.updateCustomerPhone(filtered)
+                            },
                             label = "Teléfono",
                             keyboardType = KeyboardType.Number,
                             modifier = Modifier.weight(1f)
@@ -587,34 +590,50 @@ fun CompactTextField(
     keyboardType: KeyboardType = KeyboardType.Text,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, red_600),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        modifier = modifier
-    ) {
-        Box(
+    Box(modifier = modifier.padding(top = 6.dp)) {
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            border = BorderStroke(1.dp, red_600),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(42.dp)
-                .padding(horizontal = 12.dp),
-            contentAlignment = Alignment.CenterStart
+                .height(44.dp)
         ) {
-            if (value.isEmpty()) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                if (value.isEmpty()) {
+                    Text(
+                        text = label,
+                        style = TextStyle(color = Color.Gray, fontSize = 13.sp)
+                    )
+                }
+                BasicTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    singleLine = true,
+                    textStyle = TextStyle(color = Color.Black, fontSize = 14.sp),
+                    keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                singleLine = true,
-                textStyle = TextStyle(color = Color.Black, fontSize = 14.sp),
-                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-                modifier = Modifier.fillMaxWidth()
-            )
+        }
+        if (value.isNotEmpty()) {
+            Surface(
+                color = Color.White,
+                modifier = Modifier
+                    .padding(start = 14.dp)
+                    .offset(y = (-6).dp)
+            ) {
+                Text(
+                    text = label,
+                    style = TextStyle(fontSize = 10.sp, color = red_600),
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+            }
         }
     }
 }

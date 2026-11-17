@@ -244,10 +244,10 @@ class DataViewModel @Inject constructor(
                 fields["first_name"] = name
                 val phoneInput = _customerPhone.value.trim()
                 val cleanPhone = if (phoneInput.isNotEmpty()) {
-                    phoneInput.replace(Regex("[^0-9]"), "")
+                    "+52" + phoneInput.replace(Regex("[^0-9]"), "")
                 } else {
                     val timestampStr = System.currentTimeMillis().toString()
-                    "449" + timestampStr.takeLast(7).padStart(7, '0')
+                    "+52" + "449" + timestampStr.takeLast(7).padStart(7, '0')
                 }
                 fields["phone"] = cleanPhone
 
