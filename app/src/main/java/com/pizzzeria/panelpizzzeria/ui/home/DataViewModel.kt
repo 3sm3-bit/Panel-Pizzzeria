@@ -234,7 +234,7 @@ class DataViewModel @Inject constructor(
                 val fields = mutableMapOf<String, String>()
                 fields["spot_id"] = BuildConfig.ID_BRANCH
                 fields["first_name"] = name
-                fields["phone"] = "+524495499359"
+                fields["phone"] = "+5200000009"
 
                 val commentsList = mutableListOf<String>()
                 items.forEachIndexed { index, cartItem ->
