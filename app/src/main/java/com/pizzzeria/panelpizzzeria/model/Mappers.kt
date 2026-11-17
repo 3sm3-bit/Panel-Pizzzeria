@@ -48,7 +48,8 @@ fun CategoryEntity.toDomain(): Category {
 }
 
 fun ProductEntity.toDomain(): Product {
-    val rawPriceStr = price?.values?.firstOrNull() ?: "0"
+    val spotId = com.pizzzeria.panelpizzzeria.BuildConfig.ID_BRANCH
+    val rawPriceStr = price?.get(spotId) ?: price?.values?.firstOrNull() ?: "0"
     val rawPriceDouble = rawPriceStr.toDoubleOrNull() ?: 0.0
     val finalPrice = rawPriceDouble / 100.0
 

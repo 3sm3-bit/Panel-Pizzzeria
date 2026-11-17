@@ -60,10 +60,18 @@ class SplashViewModel @Inject constructor(
                 val productsResponse = dataNetwork.getProducts(token, spotId)
                 if (productsResponse.isSuccessful) {
                     val productItems = productsResponse.body()?.response ?: emptyList()
-                    val productEntities = productItems.mapNotNull { it.toEntity() }
+                    val productEntities = productItems.mapNotNull { item ->
+                        val spotPriceStr = item.price?.get(spotId)
+                        val spotPriceVal = spotPriceStr?.toDoubleOrNull() ?: 0.0
+                        if (spotPriceVal <= 0) {
+                            null
+                        } else {
+                            item.toEntity()
+                        }
+                    }
                     productDao.clearAllProducts()
                     productDao.insertProducts(productEntities)
-                    Log.d("SplashViewModel", "Cleared old products and saved ${productEntities.size} products to database.")
+                    Log.d("SplashViewModel", "Cleared old products and saved ${productEntities.size} available products for spot $spotId.")
                 } else {
                     Log.e("SplashViewModel", "Error fetching products: ${productsResponse.errorBody()?.string()}")
                 }
