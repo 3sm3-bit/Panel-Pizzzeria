@@ -96,16 +96,16 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                         Button(
                             onClick = { viewModel.selectCategory(category.categoryId) },
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                            border = if (!isSelected) BorderStroke(1.dp, red_600) else null,
+                            border = if (!isSelected) BorderStroke(1.dp, green_600) else null,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isSelected) red_600 else Color.White,
-                                contentColor = if (isSelected) Color.White else red_600
+                                containerColor = if (isSelected) green_600 else Color.White,
+                                contentColor = if (isSelected) Color.White else green_600
                             )
                         ) {
                             Text(
                                 text = category.namePanel,
                                 style = textB12,
-                                color = if (isSelected) Color.White else red_600
+                                color = if (isSelected) Color.White else green_600
                             )
                         }
                     }
