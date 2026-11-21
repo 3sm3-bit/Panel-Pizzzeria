@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.pizzzeria.panelpizzzeria.BuildConfig
 import com.pizzzeria.panelpizzzeria.utils.green_600
 import com.pizzzeria.panelpizzzeria.utils.grey_100
 import com.pizzzeria.panelpizzzeria.utils.red_600
@@ -87,6 +88,14 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                     .padding(end = 16.dp, top = 16.dp)
             ) {
 
+                Text(
+                text = if(BuildConfig.ID_BRANCH == "1")"SUCURSAL PLAZA FIESTA" else "SUCURSAL UNIVERSIDAD",
+                    style = textB22,
+                    color = Color.Black,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -111,12 +120,6 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                     }
                 }
 
-                Text(
-                    text = "Productos",
-                    style = textB22,
-                    color = Color.Black,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
 
                 if (loading) {
                     Box(
