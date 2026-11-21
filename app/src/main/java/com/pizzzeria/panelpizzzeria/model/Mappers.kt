@@ -34,9 +34,9 @@ fun ProductItemResponse.toEntity(): ProductEntity? {
 
 fun CategoryEntity.toDomain(): Category {
     val mappedName = when (categoryId) {
-        "8" -> "PIZZAS GRANDES"
-        "9" -> "PIZZAS MEDIANAS"
-        "10" -> "PIZZAS CHICAS"
+        "8" -> "GRANDES"
+        "9" -> "MEDIANAS"
+        "10" -> "CHICAS"
         else -> categoryName ?: "Sin nombre"
     }
 
