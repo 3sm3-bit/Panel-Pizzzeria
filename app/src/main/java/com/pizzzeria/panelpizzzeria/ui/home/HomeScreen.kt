@@ -4,6 +4,12 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.pizzzeria.panelpizzzeria.model.Product
+import com.pizzzeria.panelpizzzeria.model.ModificationItem
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -31,6 +37,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.animation.core.*
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,9 +76,22 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.error.collectAsState()
     val orderState by viewModel.orderState.collectAsState()
+    val selectedProductForModal by viewModel.selectedProductForModal.collectAsState()
+    val modalSelections by viewModel.modalSelections.collectAsState()
 
     val focusManager = LocalFocusManager.current
     var showNameMissingDialog by remember { mutableStateOf(false) }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "promo_glow")
+    val promoAngle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2500, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "promoAngle"
+    )
 
     LaunchedEffect(orderState) {
         if (orderState is OrderState.Loading || orderState is OrderState.Success) {
@@ -102,20 +130,32 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                 ) {
                     items(categories) { category ->
                         val isSelected = category.categoryId == selectedCategoryId
-                        Button(
-                            onClick = { viewModel.selectCategory(category.categoryId) },
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                            border = if (!isSelected) BorderStroke(1.dp, green_600) else null,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isSelected) green_600 else Color.White,
-                                contentColor = if (isSelected) Color.White else green_600
-                            )
-                        ) {
-                            Text(
-                                text = category.namePanel,
-                                style = textB12,
-                                color = if (isSelected) Color.White else green_600
-                            )
+                        val isPromo = category.categoryId == "PROMO"
+                        val promoBoxModifier = if (isPromo) {
+                            Modifier
+                                .padding(4.dp)
+                                .rotatingGlowBorder(promoAngle, green_600, RoundedCornerShape(20.dp), 4.dp)
+                        } else {
+                            Modifier
+                        }
+
+                        Box(modifier = promoBoxModifier) {
+                            Button(
+                                onClick = { viewModel.selectCategory(category.categoryId) },
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                shape = RoundedCornerShape(20.dp),
+                                border = if (!isSelected) BorderStroke(1.dp, green_600) else null,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isSelected) green_600 else Color.White,
+                                    contentColor = if (isSelected) Color.White else green_600
+                                )
+                            ) {
+                                Text(
+                                    text = category.namePanel,
+                                    style = textB12,
+                                    color = if (isSelected) Color.White else green_600
+                                )
+                            }
                         }
                     }
                 }
@@ -148,7 +188,13 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(8.dp)
-                                    .clickable { viewModel.addToCart(product) },
+                                    .clickable {
+                                        if (product.menuCategoryId == "14" || product.groupModifications.isNotEmpty()) {
+                                            viewModel.openProductModal(product)
+                                        } else {
+                                            viewModel.addToCart(product)
+                                        }
+                                    },
                                 shape = RoundedCornerShape(20.dp),
                                 colors = CardDefaults.cardColors(containerColor = Color.White),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
@@ -277,6 +323,18 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                                             Text(text = "${cartItem.quantity}", style = MaterialTheme.typography.bodyMedium)
                                             IconButton(onClick = { viewModel.updateQuantity(cartItem.cartItemId, 1) }) {
                                                 Text(text = "+", style = MaterialTheme.typography.titleLarge)
+                                            }
+                                        }
+                                    }
+                                    if (cartItem.customSelections.isNotEmpty()) {
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            cartItem.customSelections.values.forEach { mod ->
+                                                Text(
+                                                    text = "• ${mod.name}",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = Color.DarkGray
+                                                )
                                             }
                                         }
                                     }
@@ -492,6 +550,16 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
         }
     }
 
+    if (selectedProductForModal != null) {
+        ProductCustomizationDialog(
+            product = selectedProductForModal!!,
+            selections = modalSelections,
+            onSelectionChange = { groupId, item -> viewModel.updateModalSelection(groupId, item) },
+            onConfirm = { viewModel.addCustomizedProductToCart() },
+            onDismiss = { viewModel.closeProductModal() }
+        )
+    }
+
         when (val state = orderState) {
             is OrderState.Loading -> {
                 Box(
@@ -610,6 +678,105 @@ fun CompactTextField(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProductCustomizationDialog(
+    product: Product,
+    selections: Map<Int, ModificationItem>,
+    onSelectionChange: (Int, ModificationItem) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(20.dp),
+        containerColor = Color.White,
+        title = {
+            Text(
+                text = product.productName,
+                style = textB18,
+                color = Color.Black
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 400.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                product.groupModifications.forEach { group ->
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = group.name,
+                            style = textB16,
+                            color = green_600
+                        )
+                        if (group.modifications.size == 1) {
+                            val singleMod = group.modifications.first()
+                            Text(
+                                text = "• ${singleMod.name}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.DarkGray
+                            )
+                        } else {
+                            var expanded by remember { mutableStateOf(false) }
+                            val currentSelection = selections[group.dishModificationGroupId] ?: group.modifications.first()
+
+                            ExposedDropdownMenuBox(
+                                expanded = expanded,
+                                onExpandedChange = { expanded = !expanded }
+                            ) {
+                                OutlinedTextField(
+                                    value = currentSelection.name,
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                                    modifier = Modifier
+                                        .menuAnchor()
+                                        .fillMaxWidth(),
+                                    shape = RoundedCornerShape(20.dp),
+                                    textStyle = TextStyle(color = Color.Black, fontSize = 14.sp),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = green_600,
+                                        unfocusedBorderColor = green_600,
+                                        focusedContainerColor = Color.White,
+                                        unfocusedContainerColor = Color.White
+                                    )
+                                )
+                                ExposedDropdownMenu(
+                                    expanded = expanded,
+                                    onDismissRequest = { expanded = false }
+                                ) {
+                                    group.modifications.forEach { mod ->
+                                        DropdownMenuItem(
+                                            text = { Text(mod.name, color = Color.Black) },
+                                            onClick = {
+                                                onSelectionChange(group.dishModificationGroupId, mod)
+                                                expanded = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = green_600),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Agregar al pedido", color = Color.White, style = textB16)
+            }
+        }
+    )
+}
+
 fun formatCurrency(amount: Double): String {
     val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("es-MX")).apply {
         minimumFractionDigits = 2
@@ -617,3 +784,26 @@ fun formatCurrency(amount: Double): String {
     }
     return "$ ${formatter.format(amount)}"
 }
+
+fun Modifier.rotatingGlowBorder(
+    angle: Float,
+    color: Color,
+    shape: Shape,
+    strokeWidth: Dp = 6.dp
+): Modifier = this
+    .padding(6.dp)
+    .drawBehind {
+        val strokePx = strokeWidth.toPx()
+        val outline = shape.createOutline(size, layoutDirection, this)
+        val brush = Brush.sweepGradient(
+            listOf(color, Color.White, color, Color.Transparent),
+            center = center
+        )
+        rotate(angle) {
+            drawOutline(
+                outline = outline,
+                brush = brush,
+                style = Stroke(width = strokePx)
+            )
+        }
+    }

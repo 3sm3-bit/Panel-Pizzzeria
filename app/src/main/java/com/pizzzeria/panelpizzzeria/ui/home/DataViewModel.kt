@@ -25,7 +25,8 @@ data class CartItem(
     val product: Product,
     val selectedMasa: ModificationItem? = null,
     val selectedOrilla: ModificationItem? = null,
-    val quantity: Int = 1
+    val quantity: Int = 1,
+    val customSelections: Map<Int, ModificationItem> = emptyMap()
 ) {
     val unitPrice: Double
         get() {
@@ -36,6 +37,9 @@ data class CartItem(
             val isTradicional = selectedMasa == null || selectedMasa.name.contains("TRADICIONAL", ignoreCase = true)
             if (isTradicional && selectedOrilla != null) {
                 total += selectedOrilla.price
+            }
+            customSelections.values.forEach { mod ->
+                total += mod.price
             }
             return total
         }
@@ -84,6 +88,59 @@ class DataViewModel @Inject constructor(
 
     private val _orderState = MutableStateFlow<OrderState>(OrderState.Idle)
     val orderState: StateFlow<OrderState> = _orderState.asStateFlow()
+
+    private val _selectedProductForModal = MutableStateFlow<Product?>(null)
+    val selectedProductForModal: StateFlow<Product?> = _selectedProductForModal.asStateFlow()
+
+    private val _modalSelections = MutableStateFlow<Map<Int, ModificationItem>>(emptyMap())
+    val modalSelections: StateFlow<Map<Int, ModificationItem>> = _modalSelections.asStateFlow()
+
+    fun openProductModal(product: Product) {
+        _selectedProductForModal.value = product
+        val initialSelections = mutableMapOf<Int, ModificationItem>()
+        product.groupModifications.forEach { group ->
+            if (group.modifications.isNotEmpty()) {
+                initialSelections[group.dishModificationGroupId] = group.modifications.first()
+            }
+        }
+        _modalSelections.value = initialSelections
+    }
+
+    fun closeProductModal() {
+        _selectedProductForModal.value = null
+        _modalSelections.value = emptyMap()
+    }
+
+    fun updateModalSelection(groupId: Int, item: ModificationItem) {
+        val current = _modalSelections.value.toMutableMap()
+        current[groupId] = item
+        _modalSelections.value = current
+    }
+
+    fun addCustomizedProductToCart() {
+        val product = _selectedProductForModal.value ?: return
+        val selections = _modalSelections.value
+
+        val currentCart = _cartItems.value.toMutableList()
+        val existingIndex = currentCart.indexOfFirst {
+            it.product.productId == product.productId && it.customSelections == selections && it.selectedMasa == null && it.selectedOrilla == null
+        }
+
+        if (existingIndex >= 0) {
+            val existing = currentCart[existingIndex]
+            currentCart[existingIndex] = existing.copy(quantity = existing.quantity + 1)
+        } else {
+            currentCart.add(
+                CartItem(
+                    product = product,
+                    customSelections = selections,
+                    quantity = 1
+                )
+            )
+        }
+        _cartItems.value = currentCart
+        closeProductModal()
+    }
 
     init {
         loadData()
