@@ -1,28 +1,64 @@
 package com.pizzzeria.panelpizzzeria.ui.home
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import com.pizzzeria.panelpizzzeria.model.Product
-import com.pizzzeria.panelpizzzeria.model.ModificationItem
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -32,26 +68,28 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.animation.core.*
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.pizzzeria.panelpizzzeria.BuildConfig
+import com.pizzzeria.panelpizzzeria.model.ModificationItem
+import com.pizzzeria.panelpizzzeria.model.Product
 import com.pizzzeria.panelpizzzeria.utils.green_600
 import com.pizzzeria.panelpizzzeria.utils.grey_100
 import com.pizzzeria.panelpizzzeria.utils.red_600
@@ -81,17 +119,6 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
 
     val focusManager = LocalFocusManager.current
     var showNameMissingDialog by remember { mutableStateOf(false) }
-
-    val infiniteTransition = rememberInfiniteTransition(label = "promo_glow")
-    val promoAngle by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2500, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "promoAngle"
-    )
 
     LaunchedEffect(orderState) {
         if (orderState is OrderState.Loading || orderState is OrderState.Success) {
@@ -130,32 +157,21 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                 ) {
                     items(categories) { category ->
                         val isSelected = category.categoryId == selectedCategoryId
-                        val isPromo = category.categoryId == "PROMO"
-                        val promoBoxModifier = if (isPromo) {
-                            Modifier
-                                .padding(4.dp)
-                                .rotatingGlowBorder(promoAngle, green_600, RoundedCornerShape(20.dp), 4.dp)
-                        } else {
-                            Modifier
-                        }
-
-                        Box(modifier = promoBoxModifier) {
-                            Button(
-                                onClick = { viewModel.selectCategory(category.categoryId) },
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                                shape = RoundedCornerShape(20.dp),
-                                border = if (!isSelected) BorderStroke(1.dp, green_600) else null,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isSelected) green_600 else Color.White,
-                                    contentColor = if (isSelected) Color.White else green_600
-                                )
-                            ) {
-                                Text(
-                                    text = category.namePanel,
-                                    style = textB12,
-                                    color = if (isSelected) Color.White else green_600
-                                )
-                            }
+                        Button(
+                            onClick = { viewModel.selectCategory(category.categoryId) },
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                            shape = RoundedCornerShape(20.dp),
+                            border = if (!isSelected) BorderStroke(1.dp, green_600) else null,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isSelected) green_600 else Color.White,
+                                contentColor = if (isSelected) Color.White else green_600
+                            )
+                        ) {
+                            Text(
+                                text = category.namePanel,
+                                style = textB12,
+                                color = if (isSelected) Color.White else green_600
+                            )
                         }
                     }
                 }

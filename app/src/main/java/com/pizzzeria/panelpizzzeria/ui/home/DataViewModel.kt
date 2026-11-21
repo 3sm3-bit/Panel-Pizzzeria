@@ -293,8 +293,8 @@ class DataViewModel @Inject constructor(
                 fields["spot_id"] = BuildConfig.ID_BRANCH
                 fields["first_name"] = name
                 val defaultPhone = when (BuildConfig.ID_BRANCH) {
-                    "1" -> "+524491000000"
-                    "3" -> "+524490000000"
+                    "1" -> "+524490000000"
+                    "3" -> "+524491000000"
                     else -> "+524490000000"
                 }
                 fields["phone"] = defaultPhone.replace(Regex("[^0-9]"), "")
@@ -312,6 +312,9 @@ class DataViewModel @Inject constructor(
                     cartItem.selectedOrilla?.let { orilla ->
                         mods.add(mapOf("m" to orilla.dishModificationId, "a" to 1))
                     }
+                    cartItem.customSelections.values.forEach { mod ->
+                        mods.add(mapOf("m" to mod.dishModificationId, "a" to 1))
+                    }
                     if (mods.isNotEmpty()) {
                         fields["products[$index][modification]"] = Gson().toJson(mods)
                     }
@@ -319,10 +322,14 @@ class DataViewModel @Inject constructor(
                     var desc = "${cartItem.quantity}x ${cartItem.product.productName}"
                     cartItem.selectedMasa?.let { desc += " (${it.name})" }
                     cartItem.selectedOrilla?.let { desc += " [${it.name}]" }
+                    if (cartItem.customSelections.isNotEmpty()) {
+                        val customNames = cartItem.customSelections.values.joinToString(", ") { it.name }
+                        desc += " [$customNames]"
+                    }
                     commentsList.add(desc)
                 }
 
-                fields["comment"] = "Cliente: $name | Pedido: " + commentsList.joinToString(", ")
+                fields["comment"] = "Cliente: $name"
 
                 val response = dataNetwork.createIncomingOrder(token, fields)
                 if (response.isSuccessful) {
