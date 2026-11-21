@@ -189,7 +189,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                                     .fillMaxWidth()
                                     .padding(8.dp)
                                     .clickable {
-                                        if (product.menuCategoryId == "14" || product.groupModifications.isNotEmpty()) {
+                                        if (product.menuCategoryId == "14") {
                                             viewModel.openProductModal(product)
                                         } else {
                                             viewModel.addToCart(product)
