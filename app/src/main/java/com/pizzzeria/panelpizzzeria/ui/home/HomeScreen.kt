@@ -1,11 +1,5 @@
 package com.pizzzeria.panelpizzzeria.ui.home
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -70,7 +64,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -354,12 +347,17 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                                             }
                                         }
                                     }
-                                    val masaGroup = cartItem.product.groupModifications.firstOrNull {
-                                        it.name.contains("MASA", ignoreCase = true) || it.dishModificationGroupId == 1
-                                    }
-                                    val orillaGroup = cartItem.product.groupModifications.firstOrNull {
-                                        it.name.contains("Orilla", ignoreCase = true) || it.dishModificationGroupId == 11
-                                    }
+                                    val isPromo = cartItem.product.menuCategoryId == "14"
+                                    val masaGroup = if (!isPromo) {
+                                        cartItem.product.groupModifications.firstOrNull {
+                                            it.name.contains("MASA", ignoreCase = true) || it.dishModificationGroupId == 1
+                                        }
+                                    } else null
+                                    val orillaGroup = if (!isPromo) {
+                                        cartItem.product.groupModifications.firstOrNull {
+                                            it.name.contains("Orilla", ignoreCase = true) || it.dishModificationGroupId == 11
+                                        }
+                                    } else null
 
                                     val isTradicionalSelected = cartItem.selectedMasa == null ||
                                             cartItem.selectedMasa.name.contains("TRADICIONAL", ignoreCase = true)
@@ -723,6 +721,7 @@ fun ProductCustomizationDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 product.groupModifications.forEach { group ->
+                    if (group.modifications.isEmpty()) return@forEach
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
                             text = group.name,

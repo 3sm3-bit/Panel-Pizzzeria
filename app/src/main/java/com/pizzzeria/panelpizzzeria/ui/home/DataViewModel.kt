@@ -208,7 +208,7 @@ class DataViewModel @Inject constructor(
         val currentCart = _cartItems.value.toMutableList()
 
         val masaGroup = product.groupModifications.firstOrNull {
-            it.name.contains("MASA", ignoreCase = true) || it.dishModificationGroupId == 1
+            (it.name.contains("MASA", ignoreCase = true) || it.dishModificationGroupId == 1) && it.modifications.isNotEmpty()
         }
         val defaultMasa = masaGroup?.modifications?.firstOrNull {
             it.name.contains("TRADICIONAL", ignoreCase = true)
