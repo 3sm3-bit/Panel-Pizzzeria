@@ -116,6 +116,8 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
     val orderState by viewModel.orderState.collectAsState()
     val selectedProductForModal by viewModel.selectedProductForModal.collectAsState()
     val modalSelections by viewModel.modalSelections.collectAsState()
+    val modalMasa by viewModel.modalMasa.collectAsState()
+    val modalOrilla by viewModel.modalOrilla.collectAsState()
 
     val focusManager = LocalFocusManager.current
     var showNameMissingDialog by remember { mutableStateOf(false) }
@@ -586,6 +588,10 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
         ProductCustomizationDialog(
             product = selectedProductForModal!!,
             selections = modalSelections,
+            modalMasa = modalMasa,
+            modalOrilla = modalOrilla,
+            onMasaChange = { viewModel.updateModalMasa(it) },
+            onOrillaToggle = { viewModel.toggleModalOrilla(it) },
             onSelectionChange = { groupId, item -> viewModel.updateModalSelection(groupId, item) },
             onConfirm = { viewModel.addCustomizedProductToCart() },
             onDismiss = { viewModel.closeProductModal() }
@@ -715,10 +721,23 @@ fun CompactTextField(
 fun ProductCustomizationDialog(
     product: Product,
     selections: Map<Int, ModificationItem>,
+    modalMasa: ModificationItem?,
+    modalOrilla: ModificationItem?,
+    onMasaChange: (ModificationItem) -> Unit,
+    onOrillaToggle: (ModificationItem) -> Unit,
     onSelectionChange: (Int, ModificationItem) -> Unit,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val masaGroup = product.groupModifications.firstOrNull {
+        (it.name.contains("MASA", ignoreCase = true) || it.dishModificationGroupId == 1) && it.modifications.isNotEmpty()
+    }
+    val orillaGroup = product.groupModifications.firstOrNull {
+        (it.name.contains("Orilla", ignoreCase = true) || it.dishModificationGroupId == 11) && it.modifications.isNotEmpty()
+    }
+    val isTradicionalSelected = modalMasa == null || modalMasa.name.contains("TRADICIONAL", ignoreCase = true)
+    val hasOrilla = isTradicionalSelected && orillaGroup != null
+
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(20.dp),
@@ -738,58 +757,118 @@ fun ProductCustomizationDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                product.groupModifications.forEach { group ->
-                    if (group.modifications.isEmpty()) return@forEach
+                if (masaGroup != null) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(
-                            text = group.name,
-                            style = textB16,
-                            color = green_600
-                        )
-                        if (group.modifications.size == 1) {
-                            val singleMod = group.modifications.first()
-                            Text(
-                                text = "• ${singleMod.name}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.DarkGray
-                            )
-                        } else {
-                            var expanded by remember { mutableStateOf(false) }
-                            val currentSelection = selections[group.dishModificationGroupId] ?: group.modifications.first()
-
-                            ExposedDropdownMenuBox(
-                                expanded = expanded,
-                                onExpandedChange = { expanded = !expanded }
-                            ) {
-                                OutlinedTextField(
-                                    value = currentSelection.name,
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                                    modifier = Modifier
-                                        .menuAnchor()
-                                        .fillMaxWidth(),
+                        Text(text = masaGroup.name, style = textB16, color = green_600)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            masaGroup.modifications.forEach { masa ->
+                                val isSelected = modalMasa?.dishModificationId == masa.dishModificationId
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { onMasaChange(masa) },
                                     shape = RoundedCornerShape(20.dp),
-                                    textStyle = TextStyle(color = Color.Black, fontSize = 14.sp),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = green_600,
-                                        unfocusedBorderColor = green_600,
-                                        focusedContainerColor = Color.White,
-                                        unfocusedContainerColor = Color.White
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = isSelected,
+                                        borderColor = green_600,
+                                        selectedBorderColor = green_600,
+                                        borderWidth = 1.dp,
+                                        selectedBorderWidth = 1.dp
+                                    ),
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        containerColor = Color.White,
+                                        labelColor = green_600,
+                                        selectedContainerColor = green_600,
+                                        selectedLabelColor = Color.White
+                                    ),
+                                    label = { Text(text = masa.name, style = MaterialTheme.typography.labelSmall) }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (hasOrilla && orillaGroup != null) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(text = orillaGroup.name, style = textB16, color = green_600)
+                        orillaGroup.modifications.forEach { orilla ->
+                            val isOrillaActive = modalOrilla?.dishModificationId == orilla.dishModificationId
+                            val priceAddStr = if (orilla.price > 0) " (+$${formatCurrency(orilla.price).replace("$ ", "")})" else ""
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "${orilla.name}$priceAddStr",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.Black
+                                )
+                                Switch(
+                                    checked = isOrillaActive,
+                                    onCheckedChange = { onOrillaToggle(orilla) },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = green_600,
+                                        checkedBorderColor = green_600
                                     )
                                 )
-                                ExposedDropdownMenu(
+                            }
+                        }
+                    }
+                }
+
+                product.groupModifications.forEach { group ->
+                    if (group.modifications.isEmpty()) return@forEach
+                    val isMasa = group.dishModificationGroupId == 1 || group.name.contains("MASA", ignoreCase = true)
+                    val isOrilla = group.dishModificationGroupId == 11 || group.name.contains("Orilla", ignoreCase = true)
+                    if (!isMasa && !isOrilla) {
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(text = group.name, style = textB16, color = green_600)
+                            if (group.modifications.size == 1) {
+                                val singleMod = group.modifications.first()
+                                Text(text = "• ${singleMod.name}", style = MaterialTheme.typography.bodyMedium, color = Color.DarkGray)
+                            } else {
+                                var expanded by remember { mutableStateOf(false) }
+                                val currentSelection = selections[group.dishModificationGroupId] ?: group.modifications.first()
+
+                                ExposedDropdownMenuBox(
                                     expanded = expanded,
-                                    onDismissRequest = { expanded = false }
+                                    onExpandedChange = { expanded = !expanded }
                                 ) {
-                                    group.modifications.forEach { mod ->
-                                        DropdownMenuItem(
-                                            text = { Text(mod.name, color = Color.Black) },
-                                            onClick = {
-                                                onSelectionChange(group.dishModificationGroupId, mod)
-                                                expanded = false
-                                            }
+                                    OutlinedTextField(
+                                        value = currentSelection.name,
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                                        modifier = Modifier
+                                            .menuAnchor()
+                                            .fillMaxWidth(),
+                                        shape = RoundedCornerShape(20.dp),
+                                        textStyle = TextStyle(color = Color.Black, fontSize = 14.sp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = green_600,
+                                            unfocusedBorderColor = green_600,
+                                            focusedContainerColor = Color.White,
+                                            unfocusedContainerColor = Color.White
                                         )
+                                    )
+                                    ExposedDropdownMenu(
+                                        expanded = expanded,
+                                        onDismissRequest = { expanded = false }
+                                    ) {
+                                        group.modifications.forEach { mod ->
+                                            DropdownMenuItem(
+                                                text = { Text(mod.name, color = Color.Black) },
+                                                onClick = {
+                                                    onSelectionChange(group.dishModificationGroupId, mod)
+                                                    expanded = false
+                                                }
+                                            )
+                                        }
                                     }
                                 }
                             }

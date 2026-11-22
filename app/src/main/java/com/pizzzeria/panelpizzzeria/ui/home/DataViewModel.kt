@@ -95,11 +95,29 @@ class DataViewModel @Inject constructor(
     private val _modalSelections = MutableStateFlow<Map<Int, ModificationItem>>(emptyMap())
     val modalSelections: StateFlow<Map<Int, ModificationItem>> = _modalSelections.asStateFlow()
 
+    private val _modalMasa = MutableStateFlow<ModificationItem?>(null)
+    val modalMasa: StateFlow<ModificationItem?> = _modalMasa.asStateFlow()
+
+    private val _modalOrilla = MutableStateFlow<ModificationItem?>(null)
+    val modalOrilla: StateFlow<ModificationItem?> = _modalOrilla.asStateFlow()
+
     fun openProductModal(product: Product) {
         _selectedProductForModal.value = product
         val initialSelections = mutableMapOf<Int, ModificationItem>()
+
+        val masaGroup = product.groupModifications.firstOrNull {
+            (it.name.contains("MASA", ignoreCase = true) || it.dishModificationGroupId == 1) && it.modifications.isNotEmpty()
+        }
+        val defaultMasa = masaGroup?.modifications?.firstOrNull {
+            it.name.contains("TRADICIONAL", ignoreCase = true)
+        } ?: masaGroup?.modifications?.firstOrNull()
+        _modalMasa.value = defaultMasa
+        _modalOrilla.value = null
+
         product.groupModifications.forEach { group ->
-            if (group.modifications.isNotEmpty()) {
+            val isMasa = group.dishModificationGroupId == 1 || group.name.contains("MASA", ignoreCase = true)
+            val isOrilla = group.dishModificationGroupId == 11 || group.name.contains("Orilla", ignoreCase = true)
+            if (!isMasa && !isOrilla && group.modifications.isNotEmpty()) {
                 initialSelections[group.dishModificationGroupId] = group.modifications.first()
             }
         }
@@ -109,6 +127,21 @@ class DataViewModel @Inject constructor(
     fun closeProductModal() {
         _selectedProductForModal.value = null
         _modalSelections.value = emptyMap()
+        _modalMasa.value = null
+        _modalOrilla.value = null
+    }
+
+    fun updateModalMasa(masa: ModificationItem) {
+        _modalMasa.value = masa
+        val isTradicional = masa.name.contains("TRADICIONAL", ignoreCase = true)
+        if (!isTradicional) {
+            _modalOrilla.value = null
+        }
+    }
+
+    fun toggleModalOrilla(orilla: ModificationItem) {
+        val current = _modalOrilla.value
+        _modalOrilla.value = if (current?.dishModificationId == orilla.dishModificationId) null else orilla
     }
 
     fun updateModalSelection(groupId: Int, item: ModificationItem) {
@@ -120,10 +153,15 @@ class DataViewModel @Inject constructor(
     fun addCustomizedProductToCart() {
         val product = _selectedProductForModal.value ?: return
         val selections = _modalSelections.value
+        val masa = _modalMasa.value
+        val orilla = _modalOrilla.value
 
         val currentCart = _cartItems.value.toMutableList()
         val existingIndex = currentCart.indexOfFirst {
-            it.product.productId == product.productId && it.customSelections == selections && it.selectedMasa == null && it.selectedOrilla == null
+            it.product.productId == product.productId && 
+            it.customSelections == selections && 
+            it.selectedMasa == masa && 
+            it.selectedOrilla == orilla
         }
 
         if (existingIndex >= 0) {
@@ -133,6 +171,8 @@ class DataViewModel @Inject constructor(
             currentCart.add(
                 CartItem(
                     product = product,
+                    selectedMasa = masa,
+                    selectedOrilla = orilla,
                     customSelections = selections,
                     quantity = 1
                 )
