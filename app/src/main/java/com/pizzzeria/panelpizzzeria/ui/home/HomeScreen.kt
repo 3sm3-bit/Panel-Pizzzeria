@@ -47,6 +47,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -56,6 +57,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -151,25 +153,36 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
 
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    contentPadding = PaddingValues(horizontal = 14.dp),
                     modifier = Modifier.padding(bottom = 16.dp)
                 ) {
                     items(categories) { category ->
                         val isSelected = category.categoryId == selectedCategoryId
-                        Button(
-                            onClick = { viewModel.selectCategory(category.categoryId) },
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                            shape = RoundedCornerShape(20.dp),
-                            border = if (!isSelected) BorderStroke(1.dp, green_600) else null,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isSelected) green_600 else Color.White,
-                                contentColor = if (isSelected) Color.White else green_600
-                            )
+                        val itemanimation = category.categoryId == "14"
+                        CompositionLocalProvider(
+                            LocalMinimumInteractiveComponentSize provides
+                                if (itemanimation) Dp.Unspecified else LocalMinimumInteractiveComponentSize.current
                         ) {
-                            Text(
-                                text = category.namePanel,
-                                style = textB12,
-                                color = if (isSelected) Color.White else green_600
-                            )
+                            Button(
+                                onClick = { viewModel.selectCategory(category.categoryId) },
+                                modifier = Modifier.outerBeamEffect(
+                                    enabled = itemanimation
+                                ),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                shape = RoundedCornerShape(20.dp),
+                                border = if (!isSelected) BorderStroke(1.dp, green_600) else null,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isSelected) green_600 else Color.White,
+                                    contentColor = if (isSelected) Color.White else green_600
+                                )
+                            ) {
+                                Text(
+                                    text = category.namePanel,
+                                    style = textB12,
+                                    color = if (isSelected) Color.White else green_600
+                                )
+                            }
                         }
                     }
                 }

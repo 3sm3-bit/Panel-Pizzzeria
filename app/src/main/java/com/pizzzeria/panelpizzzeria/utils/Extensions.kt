@@ -1,6 +1,8 @@
 package com.pizzzeria.panelpizzzeria.utils
 
 
+import android.graphics.BlurMaskFilter
+import android.os.Build
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -31,7 +33,11 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.asAndroidPath
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.min
@@ -40,12 +46,13 @@ fun Modifier.outerBeamEffect(
     enabled: Boolean,
     cornerRadius: Dp = 20.dp,
     beamStrokeWidth: Dp = 2.dp,
-    glowStrokeWidth: Dp = 6.dp,
-    beamLength: Dp = 42.dp,
-    tailColor: Color = Color(0xFF10B981),
+    glowStrokeWidth: Dp = 8.dp,
+    beamLength: Dp = 52.dp,
+    tailColor: Color = green_600,
     midColor: Color = Color(0xFF6EE7B7),
     headColor: Color = Color(0xFFFFFFFF),
-    durationMillis: Int = 2200
+    durationMillis: Int = 2200,
+    shadowRadius: Dp = 12.dp
 ): Modifier = composed {
     if (!enabled) return@composed this
 
@@ -63,19 +70,20 @@ fun Modifier.outerBeamEffect(
     this.drawWithCache {
         val beamPx = beamStrokeWidth.toPx()
         val glowPx = glowStrokeWidth.toPx()
-        val outerOffset = beamPx / 2f + 1.dp.toPx()
+        // El recorrido va sobre el borde del botón (hacia adentro la mitad del grosor del trazo)
+        val inset = beamPx / 2f
         val r = min(
-            cornerRadius.toPx() + outerOffset,
-            min(size.width, size.height) / 2f + outerOffset
+            cornerRadius.toPx() - inset,
+            min(size.width, size.height) / 2f - inset
         ).coerceAtLeast(0f)
 
         val beamPath = Path().apply {
             addRoundRect(
                 RoundRect(
-                    left = -outerOffset,
-                    top = -outerOffset,
-                    right = size.width + outerOffset,
-                    bottom = size.height + outerOffset,
+                    left = inset,
+                    top = inset,
+                    right = size.width - inset,
+                    bottom = size.height - inset,
                     cornerRadius = CornerRadius(r, r)
                 )
             )
@@ -85,131 +93,87 @@ fun Modifier.outerBeamEffect(
         val totalLength = pathMeasure.length
         val segLength = min(beamLength.toPx(), totalLength * 0.35f)
 
+        // Brillo difuminado (BlurMaskFilter funciona con aceleración por hardware desde API 28)
+        val supportsBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+        val shadowPx = shadowRadius.toPx()
+        fun blurPaint(radius: Float, width: Float) =
+            android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+                style = android.graphics.Paint.Style.STROKE
+                strokeWidth = width
+                strokeCap = android.graphics.Paint.Cap.ROUND
+                strokeJoin = android.graphics.Paint.Join.ROUND
+                maskFilter = BlurMaskFilter(radius.coerceAtLeast(1f), BlurMaskFilter.Blur.NORMAL)
+            }
+        // Sombra amplia: se dibuja detrás del botón, así solo se ve hacia afuera
+        val outerShadowPaint = if (supportsBlur) blurPaint(shadowPx, glowPx * 2.2f) else null
+        // Brillo corto: se dibuja encima del borde, junto al destello
+        val topGlowPaint = if (supportsBlur) blurPaint(shadowPx * 0.3f, glowPx) else null
+
         onDrawWithContent {
-            if (totalLength > 0f && segLength > 0f) {
-                val headDist = progress * totalLength
-                val tailDist = headDist - segLength
-
-                val segment = Path()
-                if (tailDist >= 0f) {
-                    pathMeasure.getSegment(tailDist, headDist, segment, startWithMoveTo = true)
-                } else {
-                    pathMeasure.getSegment(totalLength + tailDist, totalLength, segment, startWithMoveTo = true)
-                    pathMeasure.getSegment(0f, headDist, segment, startWithMoveTo = true)
-                }
-
-                val headPos = pathMeasure.getPosition(headDist)
-                val tailPos = pathMeasure.getPosition(
-                    if (tailDist >= 0f) tailDist else totalLength + tailDist
-                )
-
-                // 1. Halo exterior suave
-                drawPath(
-                    path = segment,
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            midColor.copy(alpha = 0.25f),
-                            headColor.copy(alpha = 0.40f)
-                        ),
-                        start = tailPos,
-                        end = headPos
-                    ),
-                    style = Stroke(
-                        width = glowPx,
-                        cap = StrokeCap.Round,
-                        join = StrokeJoin.Round
-                    )
-                )
-
-                // 2. Destello principal con 3 colores
-                drawPath(
-                    path = segment,
-                    brush = Brush.linearGradient(
-                        0.0f to Color.Transparent,
-                        0.35f to tailColor,
-                        0.75f to midColor,
-                        1.0f to headColor,
-                        start = tailPos,
-                        end = headPos
-                    ),
-                    style = Stroke(
-                        width = beamPx,
-                        cap = StrokeCap.Round,
-                        join = StrokeJoin.Round
-                    )
-                )
+            if (totalLength <= 0f || segLength <= 0f) {
+                drawContent()
+                return@onDrawWithContent
             }
 
-            // Dibuja el botón encima sin alterarlo ni difuminarlo
-            drawContent()
-        }
-    }
-}
+            val headDist = progress * totalLength
+            val tailDist = headDist - segLength
 
-fun Modifier.outerBeamSegment(
-    cornerRadius: Dp = 20.dp,
-    strokeWidth: Dp = 2.dp,
-    beamLength: Dp = 42.dp,
-    tailColor: Color = Color(0xFF10B981),
-    midColor: Color = Color(0xFF6EE7B7),
-    headColor: Color = Color(0xFFFFFFFF),
-    durationMillis: Int = 2200
-): Modifier = composed {
-    val transition = rememberInfiniteTransition(label = "beam_seg")
-    val progress by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = durationMillis, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "beam_seg_progress"
-    )
-
-    this.drawWithCache {
-        val offsetPx = strokeWidth.toPx() / 2f + 1.dp.toPx()
-        val r = min(
-            cornerRadius.toPx() + offsetPx,
-            min(size.width, size.height) / 2f + offsetPx
-        ).coerceAtLeast(0f)
-
-        val path = Path().apply {
-            addRoundRect(
-                RoundRect(
-                    left = -offsetPx,
-                    top = -offsetPx,
-                    right = size.width + offsetPx,
-                    bottom = size.height + offsetPx,
-                    cornerRadius = CornerRadius(r, r)
-                )
-            )
-        }
-        val measure = PathMeasure().apply { setPath(path, forceClosed = true) }
-        val totalLen = measure.length
-        val segLen = min(beamLength.toPx(), totalLen * 0.35f)
-
-        onDrawBehind {
-            if (totalLen <= 0f || segLen <= 0f) return@onDrawBehind
-
-            val headDist = progress * totalLen
-            val tailDist = headDist - segLen
-
-            val seg = Path()
+            val segment = Path()
             if (tailDist >= 0f) {
-                measure.getSegment(tailDist, headDist, seg, startWithMoveTo = true)
+                pathMeasure.getSegment(tailDist, headDist, segment, startWithMoveTo = true)
             } else {
-                measure.getSegment(totalLen + tailDist, totalLen, seg, startWithMoveTo = true)
-                measure.getSegment(0f, headDist, seg, startWithMoveTo = true)
+                pathMeasure.getSegment(totalLength + tailDist, totalLength, segment, startWithMoveTo = true)
+                pathMeasure.getSegment(0f, headDist, segment, startWithMoveTo = true)
             }
 
-            val headPos = measure.getPosition(headDist)
-            val tailPos = measure.getPosition(
-                if (tailDist >= 0f) tailDist else totalLen + tailDist
+            val headPos = pathMeasure.getPosition(headDist)
+            val tailPos = pathMeasure.getPosition(
+                if (tailDist >= 0f) tailDist else totalLength + tailDist
             )
 
+            fun drawBlurred(paint: android.graphics.Paint, alpha: Float) {
+                paint.shader = android.graphics.LinearGradient(
+                    tailPos.x, tailPos.y, headPos.x, headPos.y,
+                    intArrayOf(
+                        Color.Transparent.toArgb(),
+                        midColor.copy(alpha = alpha).toArgb(),
+                        headColor.copy(alpha = alpha).toArgb()
+                    ),
+                    floatArrayOf(0f, 0.6f, 1f),
+                    android.graphics.Shader.TileMode.CLAMP
+                )
+                drawIntoCanvas { it.nativeCanvas.drawPath(segment.asAndroidPath(), paint) }
+            }
+
+            // 1. Sombra hacia afuera (detrás del botón)
+            if (outerShadowPaint != null) {
+                drawBlurred(outerShadowPaint, 0.8f)
+            } else {
+                // Respaldo para Android < 9: capas anchas y tenues simulan el brillo
+                listOf(2.6f to 0.10f, 1.8f to 0.18f, 1.0f to 0.35f).forEach { (widthFactor, alpha) ->
+                    drawPath(
+                        path = segment,
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                midColor.copy(alpha = alpha),
+                                headColor.copy(alpha = alpha * 1.5f)
+                            ),
+                            start = tailPos,
+                            end = headPos
+                        ),
+                        style = Stroke(width = glowPx * widthFactor, cap = StrokeCap.Round, join = StrokeJoin.Round)
+                    )
+                }
+            }
+
+            // 2. El botón
+            drawContent()
+
+            // 3. Brillo corto y destello encima del borde
+            topGlowPaint?.let { drawBlurred(it, 0.9f) }
             drawPath(
-                path = seg,
+                path = segment,
                 brush = Brush.linearGradient(
                     0.0f to Color.Transparent,
                     0.35f to tailColor,
@@ -218,12 +182,9 @@ fun Modifier.outerBeamSegment(
                     start = tailPos,
                     end = headPos
                 ),
-                style = Stroke(
-                    width = strokeWidth.toPx(),
-                    cap = StrokeCap.Round,
-                    join = StrokeJoin.Round
-                )
+                style = Stroke(width = beamPx, cap = StrokeCap.Round, join = StrokeJoin.Round)
             )
         }
     }
 }
+
