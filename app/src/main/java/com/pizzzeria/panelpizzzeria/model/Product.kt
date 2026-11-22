@@ -22,3 +22,13 @@ data class ModificationItem(
     val name: String,
     val price: Double
 )
+
+val ModificationGroup.isMasa: Boolean
+    get() = dishModificationGroupId == 1 || name.contains("MASA", ignoreCase = true)
+
+val ModificationGroup.isOrilla: Boolean
+    get() = dishModificationGroupId == 11 || name.contains("Orilla", ignoreCase = true)
+
+/** Grupos con algún extra de pago (precio > 0): se muestran como switch y suman al precio base. */
+val ModificationGroup.hasPaidModifications: Boolean
+    get() = modifications.any { it.price > 0 }

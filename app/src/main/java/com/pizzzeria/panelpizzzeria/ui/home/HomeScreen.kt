@@ -87,8 +87,12 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.pizzzeria.panelpizzzeria.BuildConfig
+import com.pizzzeria.panelpizzzeria.model.ModificationGroup
 import com.pizzzeria.panelpizzzeria.model.ModificationItem
 import com.pizzzeria.panelpizzzeria.model.Product
+import com.pizzzeria.panelpizzzeria.model.hasPaidModifications
+import com.pizzzeria.panelpizzzeria.model.isMasa
+import com.pizzzeria.panelpizzzeria.model.isOrilla
 import com.pizzzeria.panelpizzzeria.utils.green_600
 import com.pizzzeria.panelpizzzeria.utils.grey_200
 import com.pizzzeria.panelpizzzeria.utils.outerBeamEffect
@@ -117,7 +121,8 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
     val selectedProductForModal by viewModel.selectedProductForModal.collectAsState()
     val modalSelections by viewModel.modalSelections.collectAsState()
     val modalMasa by viewModel.modalMasa.collectAsState()
-    val modalOrilla by viewModel.modalOrilla.collectAsState()
+    val modalOrillas by viewModel.modalOrillas.collectAsState()
+    val modalPaidSelections by viewModel.modalPaidSelections.collectAsState()
 
     val focusManager = LocalFocusManager.current
     var showNameMissingDialog by remember { mutableStateOf(false) }
@@ -355,12 +360,16 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                                             }
                                         }
                                     }
-                                    if (cartItem.customSelections.isNotEmpty()) {
+                                    val extraMods = cartItem.customSelections.values +
+                                            cartItem.selectedOrillas.values +
+                                            cartItem.paidModifications.values
+                                    if (extraMods.isNotEmpty()) {
                                         Spacer(modifier = Modifier.height(4.dp))
                                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                            cartItem.customSelections.values.forEach { mod ->
+                                            extraMods.forEach { mod ->
+                                                val priceAddStr = if (mod.price > 0) " (+${formatCurrency(mod.price)})" else ""
                                                 Text(
-                                                    text = "• ${mod.name}",
+                                                    text = "• ${mod.name}$priceAddStr",
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = Color.DarkGray
                                                 )
@@ -589,9 +598,11 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
             product = selectedProductForModal!!,
             selections = modalSelections,
             modalMasa = modalMasa,
-            modalOrilla = modalOrilla,
+            modalOrillas = modalOrillas,
+            modalPaidSelections = modalPaidSelections,
             onMasaChange = { viewModel.updateModalMasa(it) },
-            onOrillaToggle = { viewModel.toggleModalOrilla(it) },
+            onOrillaToggle = { groupId, item -> viewModel.toggleModalOrilla(groupId, item) },
+            onPaidToggle = { groupId, item -> viewModel.toggleModalPaidModification(groupId, item) },
             onSelectionChange = { groupId, item -> viewModel.updateModalSelection(groupId, item) },
             onConfirm = { viewModel.addCustomizedProductToCart() },
             onDismiss = { viewModel.closeProductModal() }
@@ -722,21 +733,18 @@ fun ProductCustomizationDialog(
     product: Product,
     selections: Map<Int, ModificationItem>,
     modalMasa: ModificationItem?,
-    modalOrilla: ModificationItem?,
+    modalOrillas: Map<Int, ModificationItem>,
+    modalPaidSelections: Map<Int, ModificationItem>,
     onMasaChange: (ModificationItem) -> Unit,
-    onOrillaToggle: (ModificationItem) -> Unit,
+    onOrillaToggle: (Int, ModificationItem) -> Unit,
+    onPaidToggle: (Int, ModificationItem) -> Unit,
     onSelectionChange: (Int, ModificationItem) -> Unit,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val masaGroup = product.groupModifications.firstOrNull {
-        (it.name.contains("MASA", ignoreCase = true) || it.dishModificationGroupId == 1) && it.modifications.isNotEmpty()
-    }
-    val orillaGroup = product.groupModifications.firstOrNull {
-        (it.name.contains("Orilla", ignoreCase = true) || it.dishModificationGroupId == 11) && it.modifications.isNotEmpty()
-    }
+    val groups = product.groupModifications.filter { it.modifications.isNotEmpty() }
+    val masaGroup = groups.firstOrNull { it.isMasa }
     val isTradicionalSelected = modalMasa == null || modalMasa.name.contains("TRADICIONAL", ignoreCase = true)
-    val hasOrilla = isTradicionalSelected && orillaGroup != null
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -791,42 +799,24 @@ fun ProductCustomizationDialog(
                     }
                 }
 
-                if (hasOrilla && orillaGroup != null) {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(text = orillaGroup.name, style = textB16, color = green_600)
-                        orillaGroup.modifications.forEach { orilla ->
-                            val isOrillaActive = modalOrilla?.dishModificationId == orilla.dishModificationId
-                            val priceAddStr = if (orilla.price > 0) " (+$${formatCurrency(orilla.price).replace("$ ", "")})" else ""
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "${orilla.name}$priceAddStr",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.Black
-                                )
-                                Switch(
-                                    checked = isOrillaActive,
-                                    onCheckedChange = { onOrillaToggle(orilla) },
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = Color.White,
-                                        checkedTrackColor = green_600,
-                                        checkedBorderColor = green_600
-                                    )
-                                )
-                            }
+                groups.forEach { group ->
+                    if (group.isMasa) return@forEach
+                    when {
+                        // Orillas: switch, solo con masa TRADICIONAL
+                        group.isOrilla -> if (isTradicionalSelected) {
+                            ModifierSwitchGroup(
+                                group = group,
+                                selected = modalOrillas[group.dishModificationGroupId],
+                                onToggle = { onOrillaToggle(group.dishModificationGroupId, it) }
+                            )
                         }
-                    }
-                }
-
-                product.groupModifications.forEach { group ->
-                    if (group.modifications.isEmpty()) return@forEach
-                    val isMasa = group.dishModificationGroupId == 1 || group.name.contains("MASA", ignoreCase = true)
-                    val isOrilla = group.dishModificationGroupId == 11 || group.name.contains("Orilla", ignoreCase = true)
-                    if (!isMasa && !isOrilla) {
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        // Extras con precio > 0: switch que suma al precio base
+                        group.hasPaidModifications -> ModifierSwitchGroup(
+                            group = group,
+                            selected = modalPaidSelections[group.dishModificationGroupId],
+                            onToggle = { onPaidToggle(group.dishModificationGroupId, it) }
+                        )
+                        else -> Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(text = group.name, style = textB16, color = green_600)
                             if (group.modifications.size == 1) {
                                 val singleMod = group.modifications.first()
@@ -887,6 +877,42 @@ fun ProductCustomizationDialog(
             }
         }
     )
+}
+
+@Composable
+private fun ModifierSwitchGroup(
+    group: ModificationGroup,
+    selected: ModificationItem?,
+    onToggle: (ModificationItem) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(text = group.name, style = textB16, color = green_600)
+        group.modifications.forEach { mod ->
+            val isActive = selected?.dishModificationId == mod.dishModificationId
+            val priceAddStr = if (mod.price > 0) " (+${formatCurrency(mod.price)})" else ""
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "${mod.name}$priceAddStr",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Black,
+                    modifier = Modifier.weight(1f)
+                )
+                Switch(
+                    checked = isActive,
+                    onCheckedChange = { onToggle(mod) },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = green_600,
+                        checkedBorderColor = green_600
+                    )
+                )
+            }
+        }
+    }
 }
 
 fun formatCurrency(amount: Double): String {
