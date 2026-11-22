@@ -2,6 +2,7 @@ package com.pizzzeria.panelpizzzeria.ui.home
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -62,6 +64,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
@@ -84,7 +88,8 @@ import com.pizzzeria.panelpizzzeria.BuildConfig
 import com.pizzzeria.panelpizzzeria.model.ModificationItem
 import com.pizzzeria.panelpizzzeria.model.Product
 import com.pizzzeria.panelpizzzeria.utils.green_600
-import com.pizzzeria.panelpizzzeria.utils.grey_100
+import com.pizzzeria.panelpizzzeria.utils.grey_200
+import com.pizzzeria.panelpizzzeria.utils.outerBeamEffect
 import com.pizzzeria.panelpizzzeria.utils.red_600
 import com.pizzzeria.panelpizzzeria.utils.textB12
 import com.pizzzeria.panelpizzzeria.utils.textB16
@@ -122,7 +127,7 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
     Box(modifier = Modifier.fillMaxSize()) {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = grey_100
+            color = grey_200
         ) {
         Row(
             modifier = Modifier
