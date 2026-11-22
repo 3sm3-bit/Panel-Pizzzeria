@@ -761,9 +761,9 @@ fun ProductCustomizationDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 400.dp)
+                    .heightIn(max = 600.dp)
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 if (masaGroup != null) {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -885,13 +885,15 @@ private fun ModifierSwitchGroup(
     selected: ModificationItem?,
     onToggle: (ModificationItem) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(text = group.name, style = textB16, color = green_600)
         group.modifications.forEach { mod ->
             val isActive = selected?.dishModificationId == mod.dishModificationId
             val priceAddStr = if (mod.price > 0) " (+${formatCurrency(mod.price)})" else ""
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(36.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -904,6 +906,7 @@ private fun ModifierSwitchGroup(
                 Switch(
                     checked = isActive,
                     onCheckedChange = { onToggle(mod) },
+                    modifier = Modifier.scale(0.85f),
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Color.White,
                         checkedTrackColor = green_600,
