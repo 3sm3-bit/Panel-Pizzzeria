@@ -1,6 +1,7 @@
 package com.pizzzeria.panelpizzzeria.ui.home
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -78,6 +79,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -87,6 +89,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.pizzzeria.panelpizzzeria.BuildConfig
+import com.pizzzeria.panelpizzzeria.R
 import com.pizzzeria.panelpizzzeria.model.ModificationGroup
 import com.pizzzeria.panelpizzzeria.model.ModificationItem
 import com.pizzzeria.panelpizzzeria.model.Product
@@ -150,13 +153,25 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                     .padding(end = 16.dp, top = 16.dp)
             ) {
 
-                Text(
-                text = if(BuildConfig.ID_BRANCH == "1")"SUCURSAL PLAZA FIESTA" else "SUCURSAL UNIVERSIDAD",
-                    style = textB22,
-                    color = Color.Black,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(60.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if(BuildConfig.ID_BRANCH == "1")"SUCURSAL PLAZA FIESTA" else "SUCURSAL UNIVERSIDAD",
+                        style = textB22,
+                        color = Color.Black,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Image(
+                        painter = painterResource(R.drawable.ic_logo_pizzzeria),
+                        contentDescription = "logo_mark",
+                        modifier = Modifier.width(230.dp).height(60.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
 
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
