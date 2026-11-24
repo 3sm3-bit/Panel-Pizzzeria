@@ -239,7 +239,10 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                                     .fillMaxWidth()
                                     .padding(8.dp)
                                     .clickable {
-                                        if (product.menuCategoryId == "14") {
+                                        val category = categories.find { it.categoryId == product.menuCategoryId }
+                                        val upperName = category?.categoryName?.uppercase() ?: ""
+                                        val isPromo = upperName == "PROMOCIONES" || upperName.contains("PROMO")
+                                        if (isPromo) {
                                             viewModel.openProductModal(product)
                                         } else {
                                             viewModel.addToCart(product)
