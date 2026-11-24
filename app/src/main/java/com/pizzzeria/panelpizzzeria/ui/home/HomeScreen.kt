@@ -181,7 +181,8 @@ fun HomeScreen(viewModel: DataViewModel = hiltViewModel()) {
                 ) {
                     items(categories) { category ->
                         val isSelected = category.categoryId == selectedCategoryId
-                        val itemanimation = category.categoryId == "14"
+                        val upperName = category.categoryName.uppercase()
+                        val itemanimation = upperName == "PROMOCIONES" || upperName.contains("PROMO")
                         CompositionLocalProvider(
                             LocalMinimumInteractiveComponentSize provides
                                 if (itemanimation) Dp.Unspecified else LocalMinimumInteractiveComponentSize.current
